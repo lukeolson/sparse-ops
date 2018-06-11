@@ -60,6 +60,7 @@ if __name__ == "__main__":
     except AssertionError:
         print('... pybind-omp did NOT pass')
 
+    flops = A.nnz * np.ones((ntests,))
     times_scipy = np.zeros((ntests,))
     times_pybind = np.zeros((ntests,))
     times_pybind_omp = np.zeros((ntests,))
