@@ -4,7 +4,3 @@
 *.so
 *.dSYM/
 .DS_Store
-build-test.sh
-instantiate.yml
-iteration tests.ipynb
-old_sparse_bind.cpp

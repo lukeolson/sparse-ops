@@ -1,0 +1,9 @@
+instantiate:
+- types:
+    - [int, float]
+    - [int, double]
+    - [int, "std::complex<float>"]
+    - [int, "std::complex<double>"]
+  functions:
+    - csr_matvec
+    - csr_matvec_omp
