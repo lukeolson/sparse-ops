@@ -4,4 +4,4 @@
 *.so
 *.dSYM/
 .DS_Store
-data*
+data-*
