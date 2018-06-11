@@ -36,7 +36,7 @@ void csr_matvec_omp(const I n_row,
 {
     I i, jj;
     T sum;
-    #pragma omp parallel for default(shared) private(i, sum, jj)
+    #pragma omp parallel for default(shared) schedule(static) private(i, sum, jj)
     for(i = 0; i < n_row; i++){
         sum = Yx[i];
         #pragma GCC ivdep

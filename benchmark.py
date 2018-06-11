@@ -4,6 +4,7 @@ import numpy as np
 import sparse
 import argparse
 from timeit import default_timer as timer
+import os
 
 try:
     import omp_thread_count
@@ -20,18 +21,27 @@ except ImportError:
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Timing tests for w = A * v")
-    p.add_argument("--scipy", action="store_true")
-    p.add_argument("--pybind", action="store_true")
-    p.add_argument("--pybind-omp", action="store_true")
-    p.add_argument("--save", action="store_true")
+    p.add_argument("--scipy", action="store_true",
+                   help="Test the scipy implementation")
+    p.add_argument("--ref", action="store_true",
+                   help="Test the reference implementation (no OpenMP)")
+    p.add_argument("--omp", action="store_true",
+                   help="Test the OpenMP implementation")
+    p.add_argument("--save",
+                   nargs='?', const='data.out', default=False,
+                   help="Save the results in a .npy file")
     p.add_argument("--plot", action="store_true")
     args = p.parse_args()
 
     test_scipy = args.scipy
-    test_pybind = args.pybind
-    test_pybind_omp = args.pybind_omp
+    test_ref = args.ref
+    test_omp = args.omp
     save = args.save
     plotit = args.plot
+
+    if save:
+        datadir = os.path.join(os.getcwd(), save)
+        os.makedirs(datadir, exist_ok=True)
 
     ntests = 100
     size = int(4e6)
@@ -47,23 +57,23 @@ if __name__ == "__main__":
         w2 = np.zeros((A.shape[0],))
         sparse.csr_matvec(n, n, A.indptr, A.indices, A.data, v, w2)
         np.testing.assert_array_max_ulp(w, w2)
-        print('...testing pybind passed')
+        print('...testing reference passed')
     except AssertionError:
         sys.exit(1)
-        print('... pybind did NOT pass')
+        print('... reference did NOT pass')
 
     try:
         w3 = np.zeros((A.shape[0],))
         sparse.csr_matvec(n, n, A.indptr, A.indices, A.data, v, w3)
         np.testing.assert_array_max_ulp(w, w3)
-        print('...testing pybind-omp passed with {} threads'.format(nt))
+        print('...testing OMP passed with {} threads'.format(nt))
     except AssertionError:
-        print('... pybind-omp did NOT pass')
+        print('... OMP did NOT pass')
 
     flops = A.nnz * np.ones((ntests,))
     times_scipy = np.zeros((ntests,))
-    times_pybind = np.zeros((ntests,))
-    times_pybind_omp = np.zeros((ntests,))
+    times_ref = np.zeros((ntests,))
+    times_omp = np.zeros((ntests,))
 
     if test_scipy:
         print("...testing scipy with {} runs".format(ntests))
@@ -74,37 +84,40 @@ if __name__ == "__main__":
             times_scipy[i] = t1 - t0
 
         if save:
-            np.save("data-scipy.npy", times_scipy)
+            np.savez(os.path.join(datadir, "data-scipy.npy"),
+                     times_scipy=times_scipy, flops=flops)
 
-    if test_pybind:
-        print("...testing pybind with {} runs".format(ntests))
+    if test_ref:
+        print("...testing reference with {} runs".format(ntests))
         for i in tqdm(range(ntests)):
             t0 = timer()
             sparse.csr_matvec(n, n, A.indptr, A.indices, A.data, v, w2)
             t1 = timer()
-            times_pybind[i] = t1 - t0
+            times_ref[i] = t1 - t0
 
         if save:
-            np.save("data-pybind.npy", times_pybind)
+            np.savez(os.path.join(datadir, "data-ref.npy"),
+                     times_ref=times_ref, flops=flops)
 
-    if test_pybind_omp:
-        print("...testing pybind-omp with {} runs".format(ntests))
+    if test_omp:
+        print("...testing OpenMP with {} runs".format(ntests))
         for i in tqdm(range(ntests)):
             t0 = timer()
             sparse.csr_matvec_omp(n, n, A.indptr, A.indices, A.data, v, w3)
             t1 = timer()
-            times_pybind_omp[i] = t1 - t0
+            times_omp[i] = t1 - t0
 
         if save:
-            np.save("data-pybind-omp-{}.npy".format(nt), times_pybind_omp)
+            np.savez(os.path.join(datadir, "data-omp-{}.npy".format(nt)),
+                     times_omp=times_omp, flops=flops)
 
     if plotit:
         import matplotlib.pyplot as plt
         if test_scipy:
             plt.plot(times_scipy, label='scipy.sparse')
-        if test_pybind:
-            plt.plot(times_pybind, label='pybind11')
-        if test_pybind_omp:
-            plt.plot(times_pybind_omp, label='pybind11 + OMP')
+        if test_ref:
+            plt.plot(times_ref, label='reference')
+        if test_omp:
+            plt.plot(times_omp, label='reference with OpenMP')
         plt.legend()
         plt.show()
