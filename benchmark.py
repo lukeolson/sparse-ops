@@ -1,10 +1,12 @@
 import sys
-import pyamg
 import numpy as np
 import sparse
 import argparse
 from timeit import default_timer as timer
 import os
+import subprocess
+import scipy.io as sio
+import scipy.sparse
 
 try:
     import omp_thread_count
@@ -29,8 +31,11 @@ if __name__ == "__main__":
                    help="Test the OpenMP implementation")
     p.add_argument("--save",
                    nargs='?', const='data.out', default=False,
-                   help="Save the results in a .npy file")
-    p.add_argument("--plot", action="store_true")
+                   help="Save the results in a .npz file")
+    p.add_argument("--plot", action="store_true",
+                   help="A simple plot")
+    p.add_argument("--matrix", nargs=1,
+                   help="cant, mc2depi, rbs480a, or yourown.mat")
     args = p.parse_args()
 
     test_scipy = args.scipy
@@ -38,16 +43,40 @@ if __name__ == "__main__":
     test_omp = args.omp
     save = args.save
     plotit = args.plot
-
-    if save:
-        datadir = os.path.join(os.getcwd(), save)
-        os.makedirs(datadir, exist_ok=True)
+    matrix = args.matrix
 
     ntests = 100
-    size = int(4e6)
-    A = pyamg.gallery.poisson((size,), format='csr')
-    n = A.shape[0]
 
+    if matrix is None:
+        size = int(4e6)
+        data = np.ones((5, size))
+        diags = np.arange(-2, 3)
+        A = scipy.sparse.spdiags(data, diags, size, size).tocsr()
+    else:
+        matrix = matrix[0]
+
+    if matrix == 'cant':
+        f = os.path.join('data-input', 'cant.mat')
+        if not os.path.isfile(f):
+            subprocess.call(['wget', '--directory-prefix=data-input', 'https://www.cise.ufl.edu/research/sparse/mat/Williams/cant.mat'])
+        mat = sio.loadmat(f)
+        A = mat['Problem'][0][0][2].tocsr()
+    elif matrix == 'mc2depi':
+        f = os.path.join('data-input', 'mc2depi.mat')
+        if not os.path.isfile(f):
+            subprocess.call(['wget', '--directory-prefix=data-input', 'https://www.cise.ufl.edu/research/sparse/mat/Williams/mc2depi.mat'])
+        mat = sio.loadmat(f)
+        A = mat['Problem'][0][0][2].tocsr()
+    elif matrix == 'rbs480a':
+        f = os.path.join('data-input', 'rbs480a.mtx.gz')
+        if not os.path.isfile(f):
+            subprocess.call(['wget', '--directory-prefix=data-input', 'ftp://math.nist.gov/pub/MatrixMarket2/NEP/robotics/rbs480a.mtx.gz'])
+        A = sio.mmread(f).tocsr()
+    else:
+        f = os.path.join('data-input', matrix)
+        A = sio.loadmat(f)['A']
+
+    n = A.shape[0]
     np.random.seed(23957)
     v = np.random.rand(n)
     V = np.random.rand(n, 2)
@@ -70,6 +99,10 @@ if __name__ == "__main__":
     except AssertionError:
         print('... OMP did NOT pass')
 
+    if save:
+        datadir = os.path.join(os.getcwd(), save)
+        os.makedirs(datadir, exist_ok=True)
+
     flops = A.nnz * np.ones((ntests,))
     times_scipy = np.zeros((ntests,))
     times_ref = np.zeros((ntests,))
@@ -84,8 +117,8 @@ if __name__ == "__main__":
             times_scipy[i] = t1 - t0
 
         if save:
-            np.savez(os.path.join(datadir, "data-scipy.npy"),
-                     times_scipy=times_scipy, flops=flops)
+            np.savez(os.path.join(datadir, "data-scipy.npz"),
+                     times=times_scipy, flops=flops)
 
     if test_ref:
         print("...testing reference with {} runs".format(ntests))
@@ -96,8 +129,8 @@ if __name__ == "__main__":
             times_ref[i] = t1 - t0
 
         if save:
-            np.savez(os.path.join(datadir, "data-ref.npy"),
-                     times_ref=times_ref, flops=flops)
+            np.savez(os.path.join(datadir, "data-ref.npz"),
+                     times=times_ref, flops=flops)
 
     if test_omp:
         print("...testing OpenMP with {} runs".format(ntests))
@@ -108,8 +141,8 @@ if __name__ == "__main__":
             times_omp[i] = t1 - t0
 
         if save:
-            np.savez(os.path.join(datadir, "data-omp-{}.npy".format(nt)),
-                     times_omp=times_omp, flops=flops)
+            np.savez(os.path.join(datadir, "data-omp-{}.npz".format(nt)),
+                     times=times_omp, flops=flops)
 
     if plotit:
         import matplotlib.pyplot as plt
