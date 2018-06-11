@@ -1,5 +1,30 @@
 #include <iostream>
 
+//
+// Threaded SpMV
+//
+// y <- A * x
+//
+// Parameters
+// ----------
+// n_row, n_col : int
+//    dimensions of the n_row x n_col matrix A
+// Ap, Aj, Ax : array
+//    CSR pointer, index, and data vectors for matrix A
+// Xx : array
+//    input vector
+// Yy : array
+//    output vector (modified in-place)
+//
+// See Also
+// --------
+// csr_matvec
+//
+// Notes
+// -----
+// Requires GCC 4.9 for ivdep
+// Requires a compiler with OMP
+//
 template <class I, class T>
 void csr_matvec_omp(const I n_row,
                 const I n_col,
@@ -9,7 +34,6 @@ void csr_matvec_omp(const I n_row,
                 const T Xx[], const int Xx_size,
                       T Yx[], const int Yx_size)
 {
-    //std::cout << "call special SpMV" << std::endl;
     I i, jj;
     T sum;
     #pragma omp parallel for default(shared) private(i, sum, jj)
@@ -23,6 +47,31 @@ void csr_matvec_omp(const I n_row,
     }
 }
 
+//
+// Reference SpMV from scipy
+//
+// y <- A * x
+//
+// Parameters
+// ----------
+// n_row, n_col : int
+//    dimensions of the n_row x n_col matrix A
+// Ap, Aj, Ax : array
+//    CSR pointer, index, and data vectors for matrix A
+// Xx : array
+//    input vector
+// Yy : array
+//    output vector (modified in-place)
+//
+// See Also
+// --------
+// csr_matvec_omp
+//
+// Notes
+// -----
+// Requires GCC 4.9 for ivdep
+// Requires a compiler with OMP
+// https://github.com/scipy/scipy/blob/master/scipy/sparse/sparsetools/csr.h#L1122
 template <class I, class T>
 void csr_matvec(const I n_row,
                 const I n_col,
@@ -32,7 +81,6 @@ void csr_matvec(const I n_row,
                 const T Xx[], const int Xx_size,
                       T Yx[], const int Yx_size)
 {
-    //std::cout << "call special SpMV" << std::endl;
     for(I i = 0; i < n_row; i++){
         T sum = Yx[i];
         for(I jj = Ap[i]; jj < Ap[i+1]; jj++){
