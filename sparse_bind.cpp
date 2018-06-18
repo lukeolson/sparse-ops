@@ -151,7 +151,8 @@ csr_matvec_omp
 Notes
 -----
 Requires GCC 4.9 for ivdep
-Requires a compiler with OMP)pbdoc");
+Requires a compiler with OMP
+https://github.com/scipy/scipy/blob/master/scipy/sparse/sparsetools/csr.h#L1122)pbdoc");
 
 }
 
