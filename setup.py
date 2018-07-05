@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-OpenMP enabled SpMV
+Sparse matrix operations
 """
 
 import sys
@@ -10,13 +10,17 @@ import setuptools
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
-version = '0.1.0'
-isreleased = False
+import os
+
+os.environ["CC"] = "/usr/local/bin/gcc-8"
+os.environ["CXX"] = "/usr/local/bin/g++-8"
 
 install_requires = (
+    omp_thread_count,
+    scipy,
+    tqdm,
     'pybind11>=2.2'
 )
-
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
 # cf http://bugs.python.org/issue26689
@@ -47,6 +51,15 @@ def cpp_flag(compiler):
         raise RuntimeError('Unsupported compiler -- at least C++11 support '
                            'is needed!')
 
+def omp_flag(compiler):
+    """Return the -fopenmp flag
+    """
+    fopenmp = '-fopenmp'
+    if has_flag(compiler, fopenmp):
+        return fopenmp
+    else:
+        raise RuntimeError('Unsupported compiler -- OpenMP is needed')
+
 
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
@@ -60,11 +73,13 @@ class BuildExt(build_ext):
         pass
 
     def build_extensions(self):
+        self.compiler.compiler_so.remove('-Wstrict-prototypes')
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         if ct == 'unix':
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
             opts.append(cpp_flag(self.compiler))
+            opts.append(omp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
@@ -104,13 +119,13 @@ ext_modules = [
 
 setup(
     name='sparse-opts',
-    version=version,
+    version='0.1.0',
     author='Luke Olson',
     author_email='luke.olson@gmail.com',
     maintainer='Luke Olson',
     maintainer_email='luke.olson@gmail.com',
     license='MIT',
-    platforms=['Windows', 'Linux', 'Solaris', 'Mac OS-X', 'Unix'],
+    platforms=['Windows', 'Linux', 'Mac OS-X', 'Unix'],
     description=__doc__.split('\n')[0],
     long_description=__doc__,
     #

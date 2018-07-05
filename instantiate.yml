@@ -7,3 +7,7 @@ instantiate:
   functions:
     - csr_matvec
     - csr_matvec_omp
+- types:
+    - [int]
+  functions:
+    - test1

@@ -47,14 +47,6 @@ if __name__ == "__main__":
 
     ntests = 100
 
-    if matrix is None:
-        size = int(4e6)
-        data = np.ones((5, size))
-        diags = np.arange(-2, 3)
-        A = scipy.sparse.spdiags(data, diags, size, size).tocsr()
-    else:
-        matrix = matrix[0]
-
     if matrix == 'cant':
         f = os.path.join('data-input', 'cant.mat')
         if not os.path.isfile(f):
@@ -72,6 +64,12 @@ if __name__ == "__main__":
         if not os.path.isfile(f):
             subprocess.call(['wget', '--directory-prefix=data-input', 'ftp://math.nist.gov/pub/MatrixMarket2/NEP/robotics/rbs480a.mtx.gz'])
         A = sio.mmread(f).tocsr()
+    elif matrix is None:
+        size = int(4e6)
+        data = np.ones((5, size))
+        diags = np.arange(-2, 3)
+        A = scipy.sparse.spdiags(data, diags, size, size).tocsr()
+        matrix = 'pyamg'
     else:
         f = os.path.join('data-input', matrix)
         A = sio.loadmat(f)['A']
