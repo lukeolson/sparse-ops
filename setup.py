@@ -12,13 +12,15 @@ from setuptools.command.build_ext import build_ext
 
 import os
 
-os.environ["CC"] = "/usr/local/bin/gcc-8"
-os.environ["CXX"] = "/usr/local/bin/g++-8"
+#os.environ["CC"] = "/usr/local/bin/gcc-8"
+#os.environ["CXX"] = "/usr/local/bin/g++-8"
+os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
+os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
 
 install_requires = (
-    omp_thread_count,
-    scipy,
-    tqdm,
+    'omp_thread_count',
+    'scipy',
+    'tqdm',
     'pybind11>=2.2'
 )
 

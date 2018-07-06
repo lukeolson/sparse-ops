@@ -2,11 +2,11 @@ from scipy.sparse import csr_matrix, _sparsetools
 from scipy.sparse.sputils import upcast_char
 import sparse
 import numpy as np
-from timeit import default_timer as timer 
+from timeit import default_timer as timer
 import pyamg
 
 
-class mycsr(csr_matrix):
+class optcsr(csr_matrix):
     """
     *OpenMP Enabled*
     """
@@ -23,7 +23,7 @@ class mycsr(csr_matrix):
         return result
 
 
-mycsr.__doc__ += csr_matrix.__doc__
+optcsr.__doc__ += csr_matrix.__doc__
 
 if __name__ == '__main__':
     nx = int(1e2)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     print(id(A.indices))
     w = A * b
     print(id(A.indices))
-    # A2 = mycsr(A)
+    # A2 = optcsr(A)
     # w2 = A2 * b
     M, N = A.shape
     result = np.zeros(M,)  # dtype=upcast_char(A.dtype.char, b.dtype.char))
