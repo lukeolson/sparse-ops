@@ -12,10 +12,10 @@ from setuptools.command.build_ext import build_ext
 
 import os
 
-#os.environ["CC"] = "/usr/local/bin/gcc-8"
-#os.environ["CXX"] = "/usr/local/bin/g++-8"
-os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
-os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
+os.environ["CC"] = "gcc"
+os.environ["CXX"] = "g++"
+#os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
+#os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
 
 install_requires = (
     'omp_thread_count',
@@ -75,7 +75,10 @@ class BuildExt(build_ext):
         pass
 
     def build_extensions(self):
-        self.compiler.compiler_so.remove('-Wstrict-prototypes')
+        try:
+            self.compiler.compiler_so.remove('-Wstrict-prototypes')
+        except:
+            pass
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         if ct == 'unix':
