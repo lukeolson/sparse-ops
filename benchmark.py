@@ -23,6 +23,8 @@ except ImportError:
 
 
 if __name__ == "__main__":
+    os.environ["CC"] = "/usr/local/bin/gcc-8"
+
     p = argparse.ArgumentParser(description="Timing tests for w = A * v")
     p.add_argument("--scipy", action="store_true",
                    help="Test the scipy implementation")
@@ -43,6 +45,7 @@ if __name__ == "__main__":
     test_ref = args.ref
     test_omp = args.omp
     save = args.save
+    print("---------", save)
     plotit = args.plot
     if args.matrix is None:
         matrix = None
