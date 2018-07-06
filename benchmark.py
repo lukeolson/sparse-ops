@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import sparse
 import argparse
+import time
 from timeit import default_timer as timer
 import os
 import subprocess
@@ -43,7 +44,10 @@ if __name__ == "__main__":
     test_omp = args.omp
     save = args.save
     plotit = args.plot
-    matrix = args.matrix
+    if args.matrix is None:
+        matrix = None
+    else:
+        matrix = args.matrix[0]
 
     ntests = 100
 
@@ -64,12 +68,23 @@ if __name__ == "__main__":
         if not os.path.isfile(f):
             subprocess.call(['wget', '--directory-prefix=data-input', 'ftp://math.nist.gov/pub/MatrixMarket2/NEP/robotics/rbs480a.mtx.gz'])
         A = sio.mmread(f).tocsr()
+    elif matrix == 'kkt_power':
+        f = os.path.join('data-input', 'kkt_power.mat')
+        if not os.path.isfile(f):
+            subprocess.call(['wget', '--directory-prefix=data-input', 'https://www.cise.ufl.edu/research/sparse/mat/Zaoui/kkt_power.mat'])
+        mat = sio.loadmat(f)
+        A = mat['Problem'][0][0][2].tocsr()
+    elif matrix == 'random':
+        print('building random')
+        import pyamg
+        size = int(1e6)
+        A = pyamg.gallery.sprand(size, size, 5.0 / size)
     elif matrix is None:
         size = int(4e6)
         data = np.ones((5, size))
         diags = np.arange(-2, 3)
         A = scipy.sparse.spdiags(data, diags, size, size).tocsr()
-        matrix = 'pyamg'
+        matrix = 'spdiags'
     else:
         f = os.path.join('data-input', matrix)
         A = sio.loadmat(f)['A']
@@ -99,6 +114,9 @@ if __name__ == "__main__":
 
     if save:
         datadir = os.path.join(os.getcwd(), save)
+        datadir += '-' + matrix + '-'
+        datadir += time.strftime('%c').replace(' ', '-')
+        datadir = datadir.replace(':', '-')
         os.makedirs(datadir, exist_ok=True)
 
     flops = A.nnz * np.ones((ntests,))

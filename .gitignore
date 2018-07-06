@@ -5,3 +5,5 @@
 *.dSYM/
 .DS_Store
 data-*
+var/
+build/
