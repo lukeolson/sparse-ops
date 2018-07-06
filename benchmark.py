@@ -45,7 +45,6 @@ if __name__ == "__main__":
     test_ref = args.ref
     test_omp = args.omp
     save = args.save
-    print("---------", save)
     plotit = args.plot
     if args.matrix is None:
         matrix = None
