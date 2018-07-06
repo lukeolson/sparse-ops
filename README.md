@@ -37,3 +37,9 @@ See `run.sh` for a full run.
 ## Example Output
 
 THis uses `analyze-data.ipynb`
+
+![](floprates-per-thread.png)
+
+![](times-per-thread.png)
+
+![](times-per-run.png)
