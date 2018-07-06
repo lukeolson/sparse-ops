@@ -116,9 +116,9 @@ if __name__ == "__main__":
 
     if save:
         datadir = os.path.join(os.getcwd(), save)
-        datadir += '-' + matrix + '-'
-        datadir += time.strftime('%c').replace(' ', '-')
-        datadir = datadir.replace(':', '-')
+        # datadir += '-' + matrix + '-'
+        # datadir += time.strftime('%c').replace(' ', '-')
+        # datadir = datadir.replace(':', '-')
         os.makedirs(datadir, exist_ok=True)
 
     flops = A.nnz * np.ones((ntests,))
